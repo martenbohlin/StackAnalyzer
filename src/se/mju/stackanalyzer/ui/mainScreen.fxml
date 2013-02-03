@@ -5,10 +5,13 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.text.*?>
 <?import javafx.scene.layout.HBox?>
-    <?import javafx.geometry.Insets?>
+<?import javafx.geometry.Insets?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml">
-  <center>
+  <top>
+    <fx:include source="menu.fxml"/>
+  </top>
+   <center>
     <BorderPane id="stackPane">
       <padding> <Insets top = "10" right = "10" bottom = "10" left = "10"/> </padding>    
     </BorderPane>
