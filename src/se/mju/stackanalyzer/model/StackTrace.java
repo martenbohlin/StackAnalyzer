@@ -95,5 +95,9 @@ public class StackTrace implements Comparable<StackTrace> {
 		}
 		return parent.compareTo(o.parent);
 	}
+
+	public String getFullyQualifiedName() {
+		return getClassName() + "." + getMethod();
+	}
 	
 }

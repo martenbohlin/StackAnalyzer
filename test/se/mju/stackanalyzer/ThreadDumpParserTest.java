@@ -91,5 +91,48 @@ public class ThreadDumpParserTest {
 		assertEquals("method1", stackTrace.getMethod());
 		assertEquals("main", stackTrace.getParent().getMethod());
 	}
+	
+	@Test
+	public void parseStacktraceWithLocked() throws IOException {
+		final String traces = "\"Disposer\" daemon prio=5 tid=0x00007f990c0b9800 nid=0x6507 in Object.wait() [0x000000016dc8c000]\n" + 
+				"   java.lang.Thread.State: WAITING (on object monitor)\n" + 
+				"        at java.lang.Object.wait(Native Method)\n" + 
+				"        - waiting on <0x00000001132143d8> (a java.lang.ref.ReferenceQueue$Lock)\n" + 
+				"        at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:135)\n" + 
+				"        - locked <0x00000001132143d8> (a java.lang.ref.ReferenceQueue$Lock)\n" + 
+				"        at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:151)\n" + 
+				"        at com.sun.glass.utils.Disposer.run(Disposer.java:69)\n" + 
+				"        at java.lang.Thread.run(Thread.java:722)";
+
+		List<ThreadState> allThredStates = new ThreadDumpParser(traces).parseAll();
+
+		StackTrace stackTrace = allThredStates.get(0).getStackTrace();
+		assertEquals("wait", stackTrace.getMethod());
+		assertEquals("remove", stackTrace.getParent().getMethod());
+		assertEquals(5, stackTrace.getDepth());
+	}
+
+//	@Test
+//	public void filtersMethods() throws IOException {
+//		// Given
+//		final String traces = 
+//				"\"threadName1\" daemon prio=10 tid=0x01 nid=0x01 runnable [0x01]\n" + 
+//				"   java.lang.Thread.State: RUNNABLE\n" + 
+//				"	at se.mju.test.Fake.method1(Fake.java:2)\n" + 
+//				"	at se.mju.test.FilteredFake.removed(FilteredFake.java:2)\n" + 
+//				"	at se.mju.test.Fake.main(Fake.java:1)\n";
+//
+//		List<ThreadState> allThredStates = new ThreadDumpParser(traces).parseAll();
+//
+//		StackTrace stackTrace = allThredStates.get(0).getStackTrace();
+//		
+//		// When
+//		stackTrace.excludeIfClassStartsWith("se.mju.test.FilteredFake");
+//		
+//		// Then
+//		assertEquals("method1", stackTrace.getMethod());
+//		assertEquals("main", stackTrace.getParent().getMethod());
+//	}
+	
 
 }

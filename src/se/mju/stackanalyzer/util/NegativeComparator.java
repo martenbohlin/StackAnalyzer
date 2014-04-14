@@ -14,5 +14,4 @@ public class NegativeComparator<T> implements Comparator<T>{
 	public int compare(T o1, T o2) {
 		return -baseComparator.compare(o1, o2);
 	}
-
 }

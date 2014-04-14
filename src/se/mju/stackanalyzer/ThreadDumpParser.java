@@ -175,12 +175,21 @@ public class ThreadDumpParser {
 			String fileName = null;
 			int lineNumber = -1;
 			if (expect("(")) {
-				fileName = parseStringEndedBy(":)");
-				if (fileName.equals("Native Method")) {
+				String fileNameAndLineNumber = parseStringEndedBy(")");
+				if (fileNameAndLineNumber.startsWith("Native Method")) {
 					fileName = null;
-				}
-				if (expect(":")) {
-					lineNumber = parseLong().intValue();
+				} else {
+					int lastIndexOfColon = fileNameAndLineNumber.lastIndexOf(':');
+					if (lastIndexOfColon >= 0) {
+						try {
+							lineNumber = Integer.parseInt(fileNameAndLineNumber.substring(lastIndexOfColon+1));
+							fileName = fileNameAndLineNumber.substring(0, lastIndexOfColon);
+						} catch (NumberFormatException e) {
+							fileName = fileNameAndLineNumber;
+						}
+					} else {
+						fileName = fileNameAndLineNumber;
+					}
 				}
 				if (!expect(")")) {
 					return false;
@@ -190,6 +199,22 @@ public class ThreadDumpParser {
 			stackTrace.addElement(element);
 			return true;
 		} else if (expect("- locked <")) {
+			Long mutex = parseLong();
+			if (mutex == null) {
+				return false;
+			}
+			if (!expect(">")) {
+				return false;
+			}
+			if (expect(" (")) {
+				@SuppressWarnings("unused")
+				String comment = parseStringEndedBy(")");
+				if (!expect(")")) {
+					return false;
+				}
+			}
+			return true;
+		} else if (expect("- waiting on <")) {
 			Long mutex = parseLong();
 			if (mutex == null) {
 				return false;

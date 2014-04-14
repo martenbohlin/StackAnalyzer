@@ -100,6 +100,38 @@ public class ThreadDumpAnalyzer extends Application {
 			"\n" +
 			"\"threadName1\" daemon prio=10 tid=0x01 nid=0x01 runnable [0x01]\n" + 
 			"   java.lang.Thread.State: RUNNABLE\n" + 
+			"	at se.mju.test.Fake.main(Fake.java:1)\n" +
+			"\n" +
+			"\"threadName1\" daemon prio=10 tid=0x01 nid=0x01 runnable [0x01]\n" + 
+			"   java.lang.Thread.State: RUNNABLE\n" + 
+			"	at se.mju.test.Fake.main(Fake.java:1)\n" +
+			"\n" +
+			"\"threadName1\" daemon prio=10 tid=0x01 nid=0x01 runnable [0x01]\n" + 
+			"   java.lang.Thread.State: RUNNABLE\n" + 
+			"	at se.mju.test.Fake.main(Fake.java:1)\n" +
+			"\n" +
+			"\"threadName1\" daemon prio=10 tid=0x01 nid=0x01 runnable [0x01]\n" + 
+			"   java.lang.Thread.State: RUNNABLE\n" + 
+			"	at se.mju.test.Fake.main(Fake.java:1)\n" +
+			"\n" +
+			"\"threadName1\" daemon prio=10 tid=0x01 nid=0x01 runnable [0x01]\n" + 
+			"   java.lang.Thread.State: RUNNABLE\n" + 
+			"	at se.mju.test.Fake.main(Fake.java:1)\n" +
+			"\n" +
+			"\"threadName1\" daemon prio=10 tid=0x01 nid=0x01 runnable [0x01]\n" + 
+			"   java.lang.Thread.State: RUNNABLE\n" + 
+			"	at se.mju.test.Fake.main(Fake.java:1)\n" +
+			"\n" +
+			"\"threadName1\" daemon prio=10 tid=0x01 nid=0x01 runnable [0x01]\n" + 
+			"   java.lang.Thread.State: RUNNABLE\n" + 
+			"	at se.mju.test.Fake.main(Fake.java:1)\n" +
+			"\n" +
+			"\"threadName1\" daemon prio=10 tid=0x01 nid=0x01 runnable [0x01]\n" + 
+			"   java.lang.Thread.State: RUNNABLE\n" + 
+			"	at se.mju.test.Fake.main(Fake.java:1)\n" +
+			"\n" +
+			"\"threadName1\" daemon prio=10 tid=0x01 nid=0x01 runnable [0x01]\n" + 
+			"   java.lang.Thread.State: RUNNABLE\n" + 
 			"	at se.mju.test.Fake.method4(Fake.java:4)\n" + 
 			"	at se.mju.test.Fake.method1(Fake.java:3)\n" + 
 			"	at se.mju.test.Fake.main(Fake.java:1)\n";
@@ -113,8 +145,9 @@ public class ThreadDumpAnalyzer extends Application {
     	
     	List<String> unnamed = getParameters().getUnnamed();
     	if (unnamed.size() > 0) {
+    		controller.open(new File(unnamed.get(0)));
+    	} else {
     		controller.open(traces);
-//    		controller.open(new File(unnamed.get(0)));
     	}
     	
     	primaryStage.setTitle("Thread Dump Analyzer");
@@ -124,7 +157,5 @@ public class ThreadDumpAnalyzer extends Application {
 	
 	public static void main(String[] args) throws IOException {
 		launch(args);
-		//final List<ThreadState> threadStates = new ThreadDumpParser(new FileReader(traces)).parseAll();
-		
 	}
 }

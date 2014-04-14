@@ -1,23 +1,38 @@
 package se.mju.stackanalyzer.ui;
 
 import javafx.animation.Transition;
+import javafx.event.EventHandler;
+import javafx.geometry.Dimension2D;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.input.ZoomEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.transform.Transform;
 import javafx.util.Duration;
 
-public class ChildResizePane extends Pane {
+public class ChildResizePane extends Pane implements EventHandler<ZoomEvent>{
 	private double childWidth = -1;
 	private double childHeight = -1;
 	private final Region child;
+	private final Rectangle clip;
 	private Region zoomedInOn;
+	private double zoomFactor = 1;
+	
 
 	public ChildResizePane(Region child) {
 		this.child = child;
 		zoomedInOn = child;
 		setPrefSize(child.prefWidth(-1), child.prefHeight(-1));
-		getChildren().add(child);		
+		getChildren().add(child);	
+		clip = new Rectangle(-10,-10,100000,100000); // Hack to show menu
+		setClip(clip);
+		
+		setOnZoomStarted(this);
+		setOnZoom(this);
 	}
 	
 	public void setChildSize(double width, double height) {
@@ -29,9 +44,16 @@ public class ChildResizePane extends Pane {
 	@Override
 	public void resize(double width, double height) {
 		super.resize(width, height);
-		double childWidth = sizeForZoomInOn(width);
-		setChildSize(childWidth, height);
-		child.setTranslateX(translationForZoomInOn(childWidth));
+		updateChildSize(width, height);
+	}
+
+	private void updateChildSize(double myWidth, double myHeight) {
+		Dimension2D newSize = sizeForZoomInOn(myWidth, myHeight);
+		setChildSize(newSize.getWidth(), newSize.getHeight());
+		layout();
+		
+		Point2D translation = translationForZoomInOn();
+		child.setTranslateX(translation.getX());
 	}
 	
 	@Override
@@ -41,23 +63,25 @@ public class ChildResizePane extends Pane {
 		}
 	}
 	
-	private double sizeForZoomInOn(double newThisWidth) {
+	private Dimension2D sizeForZoomInOn(double newThisWidth, double newThisHeight) {
 		if (zoomedInOn.getWidth() < .00000001) { // Avoid division by zero
-			return newThisWidth;
+			return new Dimension2D(newThisWidth, newThisHeight);
 		}
-		return child.getWidth() * (newThisWidth/zoomedInOn.getWidth());
+		
+		double distanceFromBottom = childHeight - zoomedInOn.getHeight();
+		double newHeight =   getHeight()/zoomFactor + distanceFromBottom;
+		double newWidth = child.getWidth() * (newThisWidth/zoomedInOn.getWidth());
+		return new Dimension2D(newWidth / zoomFactor, newHeight);
 	}
 
 
-	private double translationForZoomInOn(double width) {
+	private Point2D translationForZoomInOn() {
 		Point2D currentInSceene = zoomedInOn.localToScene(0, zoomedInOn.getHeight());
 		Point2D rootInSceene = child.localToScene(0, child.getHeight());
-
-		double currentInRoot = currentInSceene.getX() - rootInSceene.getX();
-		if (child.getWidth() < 0.0000001) { // Avoid division by zero
-			return 0;
-		}
-		return -(currentInRoot/child.getWidth())*width;
+		
+		double currentXInRoot = currentInSceene.getX() - rootInSceene.getX();
+		
+		return new Point2D(-currentXInRoot, 0);
 	}
 
 	public Transition transitionTo(Duration duration) {
@@ -65,40 +89,63 @@ public class ChildResizePane extends Pane {
 	}
 	
 	public class ZoomInOnTransition extends Transition {
-		private final double aWidth;
-		private final double newWidth;
-		private final double aTranslateX;
-		private final double aTranslateY;
-		private final double aHeight;
-		private final double newHeight;
+		private final double startDeltaX;
+		private final double startDeltaY;
+		private final double startWidth;
+		private final double startHeight;
 		
 		public ZoomInOnTransition(Duration duration) {
-			double newWidth = sizeForZoomInOn(getWidth());
+			Point2D newTranslate = translationForZoomInOn();
 
-			aWidth = ChildResizePane.this.childWidth;
-			aHeight = ChildResizePane.this.childHeight;
+			startWidth = ChildResizePane.this.childWidth;
+			startHeight = ChildResizePane.this.childHeight;
 			
-			this.newWidth = newWidth;
-			this.newHeight = aHeight;
 			
-			aTranslateX = child.getTranslateX();
-			aTranslateY = child.getTranslateY();
+			startDeltaX = child.getTranslateX() - newTranslate.getX();
+			startDeltaY = child.getTranslateY() - newTranslate.getY();
 			
 			setCycleDuration(duration);
 		}
 
 		@Override
 		protected void interpolate(double f) {
-			double newTranslateX = translationForZoomInOn(newWidth);
-			setChildSize(aWidth + f * (newWidth - aWidth), aHeight + f * (newHeight - aHeight));
-			child.setTranslateX(aTranslateX + f * (newTranslateX - aTranslateX));
+			Dimension2D size = sizeForZoomInOn(getWidth(), getHeight());
+			setChildSize(startWidth + f * (size.getWidth() - startWidth), startHeight + f * (size.getHeight() - startHeight));
 			layout();
+			
+			Point2D newTranslate = translationForZoomInOn();
+			double deltaX = startDeltaX * (1-f);
+			double deltaY = startDeltaY * (1-f);
+			child.setTranslateX(newTranslate.getX() + deltaX);
+			child.setTranslateY(newTranslate.getY() + deltaY);
+			
 		}
 
 	}
 
 	public void zoominOn(Region node, Duration duration) {
+//		zoomedInOn.setEffect(null);
 		zoomedInOn = node;
 		transitionTo(duration).play();
+//		DropShadow dropShadow = new DropShadow(40, Color.WHITE);
+//		zoomedInOn.setEffect(dropShadow);
+	}
+
+	private double previousZoomFactor;
+	@Override
+	public void handle(ZoomEvent event) {
+		double zoomBeforeThisCall = zoomFactor;
+		if (event.getEventType() == ZoomEvent.ZOOM_STARTED) {
+			previousZoomFactor = zoomFactor;
+		}
+		zoomFactor = previousZoomFactor * event.getTotalZoomFactor();
+		zoomFactor = Math.max(zoomFactor, 0.1);
+		zoomFactor = Math.min(zoomFactor, 10);
+		
+		if (zoomFactor != zoomBeforeThisCall) {
+			child.getTransforms().setAll(Transform.scale(zoomFactor, zoomFactor));
+
+			updateChildSize(getWidth(), getHeight());
+		}
 	}
 }

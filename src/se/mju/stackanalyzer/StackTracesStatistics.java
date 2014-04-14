@@ -1,6 +1,5 @@
 package se.mju.stackanalyzer;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.SortedSet;
@@ -10,7 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import se.mju.stackanalyzer.model.StackTrace;
 import se.mju.stackanalyzer.model.ThreadState;
 import se.mju.stackanalyzer.util.HashMapWithDefaultValue;
-import se.mju.stackanalyzer.util.NegativeComparator;
 import se.mju.stackanalyzer.util.Tuple;
 
 public class StackTracesStatistics {
@@ -24,7 +22,9 @@ public class StackTracesStatistics {
 		this.threadStates = threadStates;
 		for (ThreadState ts: this.threadStates) {
 			StackTrace st = ts.getStackTrace();
-			invocations.get(rootKey).incrementAndGet();
+			if (st != null) {
+				invocations.get(rootKey).incrementAndGet();
+			}
 			while (st != null) {
 				invocations.get(st).incrementAndGet();
 				stackTraces.get(st.getParent()).get(st).incrementAndGet();
@@ -34,16 +34,18 @@ public class StackTracesStatistics {
 	}
 
 	public SortedSet<Tuple<StackTrace,Float>> getStatForChildrens(StackTrace parent) {
-		NegativeComparator<Tuple<StackTrace, Float>> comparator = new NegativeComparator<>(Tuple.<StackTrace,Float>getComparatorForSecondFirst());
 		SortedSet<Tuple<StackTrace, Float>> ans = new TreeSet<>(Tuple.<StackTrace,Float>getComparatorForSecondFirst());
 		IntMap<StackTrace> childStats = stackTraces.get(parent);
 		
-		int parentInvokations = invocations.get(parent == null ? rootKey : parent).get();
+		int parentInvokations = getInvokations(parent);
 		for (Entry<StackTrace, AtomicInteger> x: childStats.entrySet()) {
 			ans.add(new Tuple<StackTrace, Float>(x.getKey(), x.getValue().get() / (float)parentInvokations));
 		}
 		
 		return ans;
+	}
+	public int getInvokations(StackTrace trace) {
+		return invocations.get(trace == null ? rootKey : trace).get();
 	}
 
 	private static class MapMapInt<K1,K2> extends HashMapWithDefaultValue<K1,IntMap<K2>> {
