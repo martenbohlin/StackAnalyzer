@@ -6,7 +6,7 @@ public class StopWatch {
 	
 	public void startNewLapAndPrintLapTime(String name) {
 		long t1 = System.currentTimeMillis();
-		System.out.format("Time %s: %d\n", name, (t1 - lastLap)/1000);
+		System.out.format("Time %s: %.2f\n", name, (t1 - lastLap)/1000.0);
 		lastLap = t1;
 	}
 

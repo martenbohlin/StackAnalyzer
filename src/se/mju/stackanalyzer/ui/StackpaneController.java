@@ -1,12 +1,20 @@
 package se.mju.stackanalyzer.ui;
 
-import se.mju.stackanalyzer.model.StackTrace;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 import javafx.event.EventHandler;
 import javafx.scene.Node;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
+import se.mju.stackanalyzer.StackTracesStatistics;
+import se.mju.stackanalyzer.model.StackTrace;
+import se.mju.stackanalyzer.model.ThreadState;
 
 public class StackpaneController implements EventHandler<MouseEvent> {
 	private static final Color JAVA_COLOR = Color.web("e1b3ff");
@@ -20,21 +28,62 @@ public class StackpaneController implements EventHandler<MouseEvent> {
 	private StacksPane currentRoot;
 	private StacksPane root;
 	private final Duration duration = Duration.millis(500);
+	private ContextMenu contextMenu;
+	private StacksPane contextMenuElement;
+	// Start with filter that fixes reflection optimizations
+	private Predicate<StackTraceElement> methodFilter = e -> !e.getClassName().startsWith("sun.reflect");
+	private final List<ThreadState> unfilteredStacks;
 
-	public StackpaneController(ChildResizePane resizePane, StacksPane root) {
-		this.resizePane = resizePane;
-		this.root = root;
+	public StackpaneController(List<ThreadState> stacks) {
+        StackTracesStatistics stats = new StackTracesStatistics(filter(stacks));
+        StacksPane rootStack = new StacksPane(null, 1, stats);
+        this.resizePane = new ChildResizePane(rootStack);
+
+        unfilteredStacks = stacks;
+		root = rootStack;
 		currentRoot = root;
 		
 		root.addMouseListener(this);
+		
+		contextMenu = new ContextMenu();
+		MenuItem cmItem1 = new MenuItem("Exclude this class");
+		cmItem1.setOnAction(e -> {
+			filterClass(contextMenuElement.getStackTrace().getClassName());
+		});
+		contextMenu.getItems().add(cmItem1);
 	}
 
 	public void handle(MouseEvent mouseEvent) {
 		if(mouseEvent.getButton().equals(MouseButton.PRIMARY)){
 			currentRoot = getStacksPane(mouseEvent);
 			resizePane.zoominOn(currentRoot, duration);
+		} else if(mouseEvent.getButton().equals(MouseButton.SECONDARY)){
+			contextMenuElement = getStacksPane(mouseEvent);
+			contextMenu.show(root ,mouseEvent.getScreenX(),mouseEvent.getScreenY());
 		}
 	}
+	
+	private void filterClass(String className) {
+//		Predicate<StackTraceElement> notReflection = e -> !e.getClassName().startsWith("sun.reflect");
+//		Predicate<StackTraceElement> notJunitInternal = e -> !e.getClassName().startsWith("org.junit.internal");
+//		Predicate<StackTraceElement> classFilter = e -> !e.getClassName().equals("com.avinode.testing.data.CustomTestDataSetLoader");
+		Predicate<StackTraceElement> classFilter = e -> !e.getClassName().equals(className);
+		methodFilter = methodFilter.and(classFilter);
+		
+        StackTracesStatistics stats = new StackTracesStatistics(filter(unfilteredStacks));
+        root = new StacksPane(null, 1, stats);
+        this.resizePane.setChild(root);
+        root.addMouseListener(this);
+	}
+	
+	private List<ThreadState> filter(List<ThreadState> stacks) {
+		Predicate<ThreadState> threadFilter = ts -> true;
+		return stacks.stream()
+				.filter(threadFilter)
+				.map(threadState -> threadState.filtered(methodFilter))
+				.collect(Collectors.toList());
+	}
+
 
 	private StacksPane getStacksPane(MouseEvent mouseEvent) {
 		Node n = (Node) mouseEvent.getSource();
@@ -65,5 +114,9 @@ public class StackpaneController implements EventHandler<MouseEvent> {
 			return SELENIUM_COLOR;
 		}
 		return DEFAULT_COLOR;
+	}
+
+	public Node getNode() {
+		return resizePane;
 	}
 }

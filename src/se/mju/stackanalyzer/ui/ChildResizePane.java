@@ -5,20 +5,18 @@ import javafx.event.EventHandler;
 import javafx.geometry.Dimension2D;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
-import javafx.scene.effect.DropShadow;
 import javafx.scene.input.ZoomEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Transform;
 import javafx.util.Duration;
 
 public class ChildResizePane extends Pane implements EventHandler<ZoomEvent>{
+	private final Rectangle clip;
 	private double childWidth = -1;
 	private double childHeight = -1;
-	private final Region child;
-	private final Rectangle clip;
+	private Region child;
 	private Region zoomedInOn;
 	private double zoomFactor = 1;
 	
@@ -33,6 +31,14 @@ public class ChildResizePane extends Pane implements EventHandler<ZoomEvent>{
 		
 		setOnZoomStarted(this);
 		setOnZoom(this);
+	}
+	
+	public void setChild(Region child) {
+		this.child = child; 
+		zoomedInOn = child;
+		getChildren().clear();
+		getChildren().add(child);
+		setNeedsLayout(true);
 	}
 	
 	public void setChildSize(double width, double height) {

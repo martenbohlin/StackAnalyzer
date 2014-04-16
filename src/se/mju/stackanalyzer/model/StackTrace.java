@@ -99,5 +99,4 @@ public class StackTrace implements Comparable<StackTrace> {
 	public String getFullyQualifiedName() {
 		return getClassName() + "." + getMethod();
 	}
-	
 }

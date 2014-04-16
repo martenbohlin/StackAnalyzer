@@ -7,12 +7,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
-import se.mju.stackanalyzer.StackTracesStatistics;
 import se.mju.stackanalyzer.ThreadDumpParser;
 import se.mju.stackanalyzer.model.ThreadState;
 import se.mju.stackanalyzer.util.StopWatch;
@@ -20,7 +20,7 @@ import se.mju.stackanalyzer.util.StopWatch;
 public class ThreadDumpAnalyzerController {
 	@FXML private BorderPane root;
 	@FXML private BorderPane stacksParent;
-	private StackpaneController stackpaneController;
+	private StackpaneController stacksPaneController;
 
 	@FXML
 	private void handleOpen(final ActionEvent event) throws FileNotFoundException, IOException {
@@ -32,7 +32,7 @@ public class ThreadDumpAnalyzerController {
 	
 	@FXML
 	private void handleZoomOut(final ActionEvent event) {
-		stackpaneController.zoomOut();
+		stacksPaneController.zoomOut();
 	}
 	
 	@FXML
@@ -40,27 +40,34 @@ public class ThreadDumpAnalyzerController {
 		System.exit(0);
 	}
 
-	public void open(File f) throws FileNotFoundException, IOException {
-		StopWatch timer = new StopWatch();
-        List<ThreadState> parseAll = new ThreadDumpParser(new BufferedReader(new FileReader(f))).parseAll();
-        timer.startNewLapAndPrintLapTime("Parse");
-		open(parseAll);
-		timer.startNewLapAndPrintLapTime("Open in UI");
+	public void open(File file) throws FileNotFoundException, IOException {
+		new Thread(() -> {
+			try {
+				StopWatch timer = new StopWatch();
+				List<ThreadState> unfilteredStacks = new ThreadDumpParser(new BufferedReader(new FileReader(file))).parseAll();
+				timer.startNewLapAndPrintLapTime("Parse");
+
+				Platform.runLater(() -> {
+					open(unfilteredStacks);
+					timer.startNewLapAndPrintLapTime("GUI Open");
+				});
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new RuntimeException(e);
+			}
+		}).start();
 	}
 
 	public void open(String traces) throws IOException {
-        open(new ThreadDumpParser(traces).parseAll());
+        List<ThreadState> stacks = new ThreadDumpParser(traces).parseAll();
+		open(stacks);
 	}
 	
 	private void open(List<ThreadState> stacks) {
-		StackTracesStatistics stats = new StackTracesStatistics(stacks);
-		StacksPane rootStack = new StacksPane(null, 1, stats);
-		ChildResizePane stacksPane = new ChildResizePane(rootStack);
-		stackpaneController = new StackpaneController(stacksPane, rootStack);
+		stacksPaneController = new StackpaneController(stacks);
 		
-		BorderPane.setAlignment(stacksPane, Pos.TOP_LEFT);
-		stacksParent.setCenter(stacksPane);
+		BorderPane.setAlignment(stacksPaneController.getNode(), Pos.TOP_LEFT);
+		stacksParent.setCenter(stacksPaneController.getNode());
 	}
-
-
+	
 }

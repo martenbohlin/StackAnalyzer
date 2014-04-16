@@ -3,6 +3,8 @@ package se.mju.stackanalyzer.model;
 import java.lang.Thread.State;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 
 public class ThreadState {
@@ -13,6 +15,16 @@ public class ThreadState {
 	private State state;
 	private List<StackTraceElement> elements = new ArrayList<>();
 	private StackTrace stackTrace;
+	
+	public ThreadState() {
+	}
+	
+	private ThreadState(ThreadState template, List<StackTraceElement> elements) {
+		this.tid = template.tid;
+		this.nid = template.nid;
+		this.state = template.state;
+		this.elements = elements;
+	}
 
 	public void setTid(long tid2) {
 		this.tid = tid2;
@@ -64,6 +76,7 @@ public class ThreadState {
 	public StackTrace getStackTrace() {
 		if (stackTrace == null) {
 			stackTrace = StackTrace.create(getElements());
+			elements = null; // We are not allowed to update this any more
 		}
 		return stackTrace;
 	}
@@ -71,5 +84,9 @@ public class ThreadState {
 	@Override
 	public String toString() {
 		return "'" + getThreadName() + " Tid:" + getTid() +"\n" + getStackTrace();
+	}
+	public ThreadState filtered(Predicate<StackTraceElement> predicate) {
+		List<StackTraceElement> stacktrace = getElements().stream().filter(predicate).collect(Collectors.toList());
+		return new ThreadState(this, stacktrace);
 	}
 }
