@@ -47,8 +47,6 @@ public class StacksPane extends Pane {
 		setPrefSize(600, 400);
 		
         rect = new Rectangle(0,BOX_HEIGHT);
-        rect.setStroke(Color.DARKBLUE);
-        rect.setStrokeWidth(STROKE_WIDTH);
         
         invisibleChildren = new Rectangle(0, INVISIBLE_HEIGHT);
         invisibleChildren.setFill(createGradient(Color.GRAY, INVISIBLE_HEIGHT*1.5));
@@ -76,7 +74,7 @@ public class StacksPane extends Pane {
         StackPane.setAlignment(label, Pos.BOTTOM_CENTER);
         //levelComponents.setStyle("-fx-border-color: green;");
         if (stackTrace != null) {
-        	Tooltip.install(levelComponents, new Tooltip(stackTrace.getFullyQualifiedName()));
+        	Tooltip.install(this, new Tooltip(stackTrace.getFullyQualifiedName()));
         }
         
         this.invokationsComparedToParent = invakationsComparedToParent;
@@ -94,7 +92,7 @@ public class StacksPane extends Pane {
         	
         	StacksPane childPane = new StacksPane(child, childInvakationsComparedToMe, stats);
         	getChildren().add(childPane);
-        	childPane.addMouseListener(levelComponents.getOnMouseClicked());
+        	this.addMouseListener(levelComponents.getOnMouseClicked());
         }
 	}
 	
@@ -123,7 +121,7 @@ public class StacksPane extends Pane {
 		levelComponents.setLayoutY(height - BOX_HEIGHT);
 		invisibleChildren.setLayoutY(height - BOX_HEIGHT - INVISIBLE_HEIGHT);
 		
-		if (width < 5) {
+		if (width < 15) {
 			levelComponents.setVisible(false);
 		} else {
 			levelComponents.setVisible(true);
