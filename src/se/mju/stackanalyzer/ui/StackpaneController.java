@@ -47,9 +47,7 @@ public class StackpaneController implements EventHandler<MouseEvent> {
 		
 		contextMenu = new ContextMenu();
 		MenuItem cmItem1 = new MenuItem("Exclude this class");
-		cmItem1.setOnAction(e -> {
-			filterClass(contextMenuElement.getStackTrace().getClassName());
-		});
+		cmItem1.setOnAction(e -> filterClass(contextMenuElement.getStackTrace().getClassName()));
 		contextMenu.getItems().add(cmItem1);
 	}
 
