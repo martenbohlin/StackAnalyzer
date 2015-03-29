@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import se.mju.stackanalyzer.model.StackTrace;
 import se.mju.stackanalyzer.model.ThreadState;
 import se.mju.stackanalyzer.util.HashMapWithDefaultValue;
-import se.mju.stackanalyzer.util.Tuple;
 
 public class StackTracesStatistics {
 	private static Object rootKey = new Object();
@@ -33,13 +32,22 @@ public class StackTracesStatistics {
 		}
 	}
 
-	public SortedSet<Tuple<StackTrace,Float>> getStatForChildrens(StackTrace parent) {
-		SortedSet<Tuple<StackTrace, Float>> ans = new TreeSet<>(Tuple.<StackTrace,Float>getComparatorForSecondFirst());
+	public StackTraceStatistics getStatForRoot() {
+		return new StackTraceStatistics(null, 1, 1);
+	}
+	
+	public SortedSet<StackTraceStatistics> getStatForChildrens(StackTrace parent) {
+		SortedSet<StackTraceStatistics> ans = new TreeSet<>();
 		IntMap<StackTrace> childStats = stackTraces.get(parent);
 		
+		int rootInvokations = getInvokations(null);
 		int parentInvokations = getInvokations(parent);
 		for (Entry<StackTrace, AtomicInteger> x: childStats.entrySet()) {
-			ans.add(new Tuple<StackTrace, Float>(x.getKey(), x.getValue().get() / (float)parentInvokations));
+			int invokations = x.getValue().get();
+			ans.add(new StackTraceStatistics(x.getKey(), 
+					invokations / (float)parentInvokations,
+					invokations / (float)rootInvokations)
+					);
 		}
 		
 		return ans;

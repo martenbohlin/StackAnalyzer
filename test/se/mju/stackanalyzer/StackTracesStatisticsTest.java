@@ -43,16 +43,16 @@ public class StackTracesStatisticsTest {
 		StackTracesStatistics stackTracesStatistics = new StackTracesStatistics(parsed);
 		
 		// When
-		SortedSet<Tuple<StackTrace,Float>> roots = stackTracesStatistics.getStatForChildrens(null);
-		SortedSet<Tuple<StackTrace,Float>> level2 = stackTracesStatistics.getStatForChildrens(roots.first().getFirst());
+		StackTraceStatistics root = stackTracesStatistics.getStatForRoot();
+		SortedSet<StackTraceStatistics> level1 = stackTracesStatistics.getStatForChildrens(root.geftStacktace());
+		SortedSet<StackTraceStatistics> level2 = stackTracesStatistics.getStatForChildrens(level1.first().geftStacktace());
 		
 		// Then
-		assertEquals(1, roots.size());
-		assertEquals(1.0, roots.first().getSecond().floatValue(), 0.01);
+		assertEquals(1.0, level1.first().getInvakationsComparedToParent(), 0.01);
 		
 		assertEquals(2, level2.size());
-		assertEquals(0.50, level2.first().getSecond().floatValue(), 0.01);
-		assertEquals(0.25, level2.last().getSecond().floatValue(), 0.01);
+		assertEquals(0.50, level2.first().getInvakationsComparedToParent(), 0.01);
+		assertEquals(0.25, level2.last().getInvakationsComparedToParent(), 0.01);
 	}
 
 	@Test
@@ -67,10 +67,10 @@ public class StackTracesStatisticsTest {
 		
 		// Then
 		StackTracesStatistics stackTracesStatistics = new StackTracesStatistics(filtered);
-		SortedSet<Tuple<StackTrace,Float>> roots = stackTracesStatistics.getStatForChildrens(null);
-		SortedSet<Tuple<StackTrace,Float>> level2 = stackTracesStatistics.getStatForChildrens(roots.first().getFirst());
+		StackTraceStatistics root = stackTracesStatistics.getStatForRoot();
+		SortedSet<StackTraceStatistics> level2 = stackTracesStatistics.getStatForChildrens(root.geftStacktace());
 
-		assertEquals("se.mju.test.Fake", level2.first().getFirst().getClassName());
-		assertEquals("se.mju.test.Fake",level2.last().getFirst().getClassName() );
+		assertEquals("se.mju.test.Fake", level2.first().geftStacktace().getClassName());
+		assertEquals("se.mju.test.Fake",level2.last().geftStacktace().getClassName() );
 	}
 }

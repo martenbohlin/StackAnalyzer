@@ -36,7 +36,7 @@ public class StackpaneController implements EventHandler<MouseEvent> {
 
 	public StackpaneController(List<ThreadState> stacks) {
         StackTracesStatistics stats = new StackTracesStatistics(filter(stacks));
-        StacksPane rootStack = new StacksPane(null, 1, stats);
+        StacksPane rootStack = new StacksPane(stats.getStatForRoot(), stats);
         this.resizePane = new ChildResizePane(rootStack);
 
         unfilteredStacks = stacks;
@@ -69,7 +69,7 @@ public class StackpaneController implements EventHandler<MouseEvent> {
 		methodFilter = methodFilter.and(classFilter);
 		
         StackTracesStatistics stats = new StackTracesStatistics(filter(unfilteredStacks));
-        root = new StacksPane(null, 1, stats);
+        root = new StacksPane(stats.getStatForRoot(), stats);
         this.resizePane.setChild(root);
         root.addMouseListener(this);
 	}

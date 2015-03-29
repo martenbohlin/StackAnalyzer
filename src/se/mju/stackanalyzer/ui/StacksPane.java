@@ -20,13 +20,12 @@ import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.shape.Rectangle;
+import se.mju.stackanalyzer.StackTraceStatistics;
 import se.mju.stackanalyzer.StackTracesStatistics;
 import se.mju.stackanalyzer.model.StackTrace;
-import se.mju.stackanalyzer.util.Tuple;
 
 public class StacksPane extends Pane {
 	
-	private static final double STROKE_WIDTH = 1;
 	private static final double BOX_HEIGHT = 20;
 	private static final double INVISIBLE_HEIGHT = BOX_HEIGHT*3;
 	public static final double BOX_MARGIN = 0;
@@ -41,8 +40,8 @@ public class StacksPane extends Pane {
 	private boolean childrenCreated = false;
 	private StackTracesStatistics stats;
 
-	public StacksPane(StackTrace stackTrace, float invakationsComparedToParent, final StackTracesStatistics stats) {
-		this.stackTrace = stackTrace;
+	public StacksPane(final StackTraceStatistics traceStats, final StackTracesStatistics stats) {
+		this.stackTrace = traceStats.geftStacktace();
 		this.stats = stats;
 		setPrefSize(600, 400);
 		
@@ -74,10 +73,18 @@ public class StacksPane extends Pane {
         StackPane.setAlignment(label, Pos.BOTTOM_CENTER);
         //levelComponents.setStyle("-fx-border-color: green;");
         if (stackTrace != null) {
-        	Tooltip.install(this, new Tooltip(stackTrace.getFullyQualifiedName()));
+        	Tooltip tooltip = new Tooltip();
+        	tooltip.activatedProperty().addListener(
+        			(ov,  old_val,  new_val) -> {
+        					tooltip.setText(stackTrace.getFullyQualifiedName() + "\n" 
+        					+ Math.round(traceStats.getInvakationsComparedToParent() * 100) + "% of parent\n"
+        					+ Math.round(traceStats.getInvakationsComparedToRoot() * 100) + "% of root");
+        			}
+        	);
+			Tooltip.install(this, tooltip);
         }
         
-        this.invokationsComparedToParent = invakationsComparedToParent;
+        this.invokationsComparedToParent = traceStats.getInvakationsComparedToParent();
         color = StackpaneController.getColor(stackTrace);
 	}
 
@@ -86,11 +93,8 @@ public class StacksPane extends Pane {
 			return;
 		}
 		childrenCreated = true;
-		for (Tuple<StackTrace, Float> x: stats.getStatForChildrens(stackTrace)) {
-        	StackTrace child = x.getFirst();
-        	float childInvakationsComparedToMe = x.getSecond();
-        	
-        	StacksPane childPane = new StacksPane(child, childInvakationsComparedToMe, stats);
+		for (StackTraceStatistics x: stats.getStatForChildrens(stackTrace)) {
+        	StacksPane childPane = new StacksPane(x, stats);
         	getChildren().add(childPane);
         	this.addMouseListener(levelComponents.getOnMouseClicked());
         }
