@@ -13,6 +13,8 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 import se.mju.stackanalyzer.ThreadDumpParser;
 import se.mju.stackanalyzer.model.ThreadState;
 import se.mju.stackanalyzer.util.StopWatch;
@@ -41,6 +43,10 @@ public class ThreadDumpAnalyzerController {
 	}
 
 	public void open(File file) throws FileNotFoundException, IOException {
+		Window window = root.getScene().getWindow();
+		if (window instanceof Stage) {
+			((Stage) window).setTitle("Thread Dump Analyzer: " + file.getName());
+		}
 		new Thread(() -> {
 			try {
 				StopWatch timer = new StopWatch();
