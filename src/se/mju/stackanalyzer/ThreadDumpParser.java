@@ -87,6 +87,11 @@ public class ThreadDumpParser {
 		if (name == null) {
 			return false;
 		}
+		if (expect(" #")) {
+			@SuppressWarnings("unused")
+			Long whatisthis = parseLong();
+		}
+
 		@SuppressWarnings("unused")
 		boolean daemon=expect(" daemon");
 
@@ -97,6 +102,13 @@ public class ThreadDumpParser {
 		if (prio == null) {
 			return false;
 		}
+		
+		if (expect(" os_prio=")) {
+			Long osprio = parseLong();
+			if (osprio == null) {
+				return false;
+			}
+		}		
 		
 		if (!expect(" tid=")) {
 			return false;
@@ -121,7 +133,7 @@ public class ThreadDumpParser {
 				if (mutex == null) {
 					return false;
 				}
-				if (!expect("}")) {
+				if (!expect("]")) {
 					return false;
 				}
 			}
@@ -131,7 +143,7 @@ public class ThreadDumpParser {
 				if (mutex == null) {
 					return false;
 				}
-				if (!expect("}")) {
+				if (!expect("]")) {
 					return false;
 				}
 			}
@@ -197,42 +209,38 @@ public class ThreadDumpParser {
 			StackTraceElement element = new StackTraceElement(declaringClass, methodName, fileName, lineNumber);
 			stackTrace.addElement(element);
 			return true;
-		} else if (expect("- locked <")) {
-			Long mutex = parseLong();
-			if (mutex == null) {
-				return false;
-			}
-			if (!expect(">")) {
-				return false;
-			}
-			if (expect(" (")) {
-				@SuppressWarnings("unused")
-				String comment = parseStringEndedBy(")");
-				if (!expect(")")) {
-					return false;
-				}
-			}
-			return true;
-		} else if (expect("- waiting on <")) {
-			Long mutex = parseLong();
-			if (mutex == null) {
-				return false;
-			}
-			if (!expect(">")) {
-				return false;
-			}
-			if (expect(" (")) {
-				@SuppressWarnings("unused")
-				String comment = parseStringEndedBy(")");
-				if (!expect(")")) {
-					return false;
-				}
-			}
-			return true;
+		} else if (expect("- locked")) {
+			return parseMutexInfo();
+		} else if (expect("- waiting on")) {
+			return parseMutexInfo();
+		} else if (expect("- parking to wait for")) {
+			return parseMutexInfo();			
 		} else {
 			return false;
 		}
 		
+	}
+
+	private boolean parseMutexInfo() throws IOException {
+		skipWhitespace();
+		if (!expect("<")) {
+			return false;
+		}
+		Long mutex = parseLong();
+		if (mutex == null) {
+			return false;
+		}
+		if (!expect(">")) {
+			return false;
+		}
+		if (expect(" (")) {
+			@SuppressWarnings("unused")
+			String comment = parseStringEndedBy(")");
+			if (!expect(")")) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private String parseQuotedString() throws IOException {
