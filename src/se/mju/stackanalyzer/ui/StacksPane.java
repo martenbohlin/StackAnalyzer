@@ -1,11 +1,5 @@
 package se.mju.stackanalyzer.ui;
 
-import static java.lang.Math.max;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
-
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -23,6 +17,12 @@ import javafx.scene.shape.Rectangle;
 import se.mju.stackanalyzer.StackTraceStatistics;
 import se.mju.stackanalyzer.StackTracesStatistics;
 import se.mju.stackanalyzer.model.StackTrace;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static java.lang.Math.max;
 
 public class StacksPane extends Pane {
 	
@@ -81,7 +81,7 @@ public class StacksPane extends Pane {
         					+ Math.round(traceStats.getInvakationsComparedToRoot() * 100) + "% of root");
         			}
         	);
-			Tooltip.install(this, tooltip);
+			Tooltip.install(label, tooltip);
         }
         
         this.invokationsComparedToParent = traceStats.getInvakationsComparedToParent();
