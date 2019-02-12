@@ -1,9 +1,5 @@
 package se.mju.stackanalyzer.ui;
 
-import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
@@ -15,6 +11,10 @@ import javafx.util.Duration;
 import se.mju.stackanalyzer.StackTracesStatistics;
 import se.mju.stackanalyzer.model.StackTrace;
 import se.mju.stackanalyzer.model.ThreadState;
+
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class StackpaneController implements EventHandler<MouseEvent> {
 	private static final Color JAVA_COLOR = Color.web("e1b3ff");
@@ -68,9 +68,6 @@ public class StackpaneController implements EventHandler<MouseEvent> {
 	}
 	
 	private void filterClass(String className) {
-//		Predicate<StackTraceElement> notReflection = e -> !e.getClassName().startsWith("sun.reflect");
-//		Predicate<StackTraceElement> notJunitInternal = e -> !e.getClassName().startsWith("org.junit.internal");
-//		Predicate<StackTraceElement> classFilter = e -> !e.getClassName().equals("com.avinode.testing.data.CustomTestDataSetLoader");
 		Predicate<StackTraceElement> classFilter = e -> !e.getClassName().equals(className);
 		methodFilter = methodFilter.and(classFilter);
 
