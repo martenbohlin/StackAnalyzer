@@ -4,6 +4,7 @@ import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class StackpaneController implements EventHandler<MouseEvent> {
+public class StackpaneController<depthFilter> implements EventHandler<MouseEvent> {
 	private static final Color JAVA_COLOR = Color.web("e1b3ff");
 	private static final Color SUN_COLOR = Color.web("e1b3ff").darker();
 	private static final Color GRADLE_COLOR = Color.web("acd180");
@@ -33,8 +34,8 @@ public class StackpaneController implements EventHandler<MouseEvent> {
 	// Start with filter that fixes reflection optimizations
 	private Predicate<StackTraceElement> methodFilter = e -> !e.getClassName().startsWith("sun.reflect");
 	private final List<ThreadState> unfilteredStacks;
-	private Predicate<ThreadState> threadFilter = ts -> true;
-
+	private DepthFilter depthFilter = new DepthFilter();
+	private Predicate<ThreadState> threadFilter = depthFilter;
 
 	public StackpaneController(List<ThreadState> stacks) {
         StackTracesStatistics stats = new StackTracesStatistics(filter(stacks));
@@ -48,13 +49,16 @@ public class StackpaneController implements EventHandler<MouseEvent> {
 		root.addMouseListener(this);
 		
 		contextMenu = new ContextMenu();
-		MenuItem cmItem1 = new MenuItem("Exclude this class");
-		cmItem1.setOnAction(e -> filterClass(contextMenuElement.getStackTrace().getClassName()));
-		contextMenu.getItems().add(cmItem1);
-
-		cmItem1 = new MenuItem("Exclude < 30 deep");
-		cmItem1.setOnAction(e -> filterDepth());
-		contextMenu.getItems().add(cmItem1);
+		MenuItem item = new MenuItem("Exclude this class");
+		item.setOnAction(e -> filterClass(contextMenuElement.getStackTrace().getClassName()));
+		contextMenu.getItems().add(item);
+		contextMenu.getItems().add(new SeparatorMenuItem());
+		for (int i = 5; i <100; i*=2) {
+			item = new MenuItem("Exclude deep < " + i);
+			int finalI = i;
+			item.setOnAction(e -> filterDepth(finalI));
+			contextMenu.getItems().add(item);
+		}
 	}
 
 	public void handle(MouseEvent mouseEvent) {
@@ -74,8 +78,8 @@ public class StackpaneController implements EventHandler<MouseEvent> {
 		updateFiltered();
 	}
 
-	private void filterDepth() {
-		threadFilter = threadFilter.and(it -> it.getElements().size() > 30);
+	private void filterDepth(int limit) {
+		depthFilter.setLimit(limit);
 
 		updateFiltered();
 	}
@@ -127,5 +131,18 @@ public class StackpaneController implements EventHandler<MouseEvent> {
 
 	public Node getNode() {
 		return resizePane;
+	}
+
+	private static class DepthFilter implements Predicate<ThreadState> {
+		private int limit = 0;
+
+		@Override
+		public boolean test(ThreadState threadState) {
+			return threadState.getElements().size() > limit;
+		}
+
+		public void setLimit(int limit) {
+			this.limit = limit;
+		}
 	}
 }
