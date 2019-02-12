@@ -33,6 +33,8 @@ public class StackpaneController implements EventHandler<MouseEvent> {
 	// Start with filter that fixes reflection optimizations
 	private Predicate<StackTraceElement> methodFilter = e -> !e.getClassName().startsWith("sun.reflect");
 	private final List<ThreadState> unfilteredStacks;
+	private Predicate<ThreadState> threadFilter = ts -> true;
+
 
 	public StackpaneController(List<ThreadState> stacks) {
         StackTracesStatistics stats = new StackTracesStatistics(filter(stacks));
@@ -48,6 +50,10 @@ public class StackpaneController implements EventHandler<MouseEvent> {
 		contextMenu = new ContextMenu();
 		MenuItem cmItem1 = new MenuItem("Exclude this class");
 		cmItem1.setOnAction(e -> filterClass(contextMenuElement.getStackTrace().getClassName()));
+		contextMenu.getItems().add(cmItem1);
+
+		cmItem1 = new MenuItem("Exclude < 30 deep");
+		cmItem1.setOnAction(e -> filterDepth());
 		contextMenu.getItems().add(cmItem1);
 	}
 
@@ -67,21 +73,29 @@ public class StackpaneController implements EventHandler<MouseEvent> {
 //		Predicate<StackTraceElement> classFilter = e -> !e.getClassName().equals("com.avinode.testing.data.CustomTestDataSetLoader");
 		Predicate<StackTraceElement> classFilter = e -> !e.getClassName().equals(className);
 		methodFilter = methodFilter.and(classFilter);
-		
-        StackTracesStatistics stats = new StackTracesStatistics(filter(unfilteredStacks));
-        root = new StacksPane(stats.getStatForRoot(), stats);
-        this.resizePane.setChild(root);
-        root.addMouseListener(this);
+
+		updateFiltered();
 	}
-	
+
+	private void filterDepth() {
+		threadFilter = threadFilter.and(it -> it.getElements().size() > 30);
+
+		updateFiltered();
+	}
+
+	private void updateFiltered() {
+		StackTracesStatistics stats = new StackTracesStatistics(filter(unfilteredStacks));
+		root = new StacksPane(stats.getStatForRoot(), stats);
+		this.resizePane.setChild(root);
+		root.addMouseListener(this);
+	}
+
 	private List<ThreadState> filter(List<ThreadState> stacks) {
-		Predicate<ThreadState> threadFilter = ts -> true;
 		return stacks.stream()
 				.filter(threadFilter)
 				.map(threadState -> threadState.filtered(methodFilter))
 				.collect(Collectors.toList());
 	}
-
 
 	private StacksPane getStacksPane(MouseEvent mouseEvent) {
 		Node n = (Node) mouseEvent.getSource();
