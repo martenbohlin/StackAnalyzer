@@ -46,10 +46,6 @@ public class ThreadDumpAnalyzerController {
 	}
 
 	public void open(File file) throws FileNotFoundException, IOException {
-		Window window = root.getScene().getWindow();
-		if (window instanceof Stage) {
-			((Stage) window).setTitle("Thread Dump Analyzer: " + file.getName());
-		}
 		new Thread(() -> {
 			try {
 				StopWatch timer = new StopWatch();
@@ -60,6 +56,10 @@ public class ThreadDumpAnalyzerController {
 				Platform.runLater(() -> {
 					open(unfilteredStacks);
 					timer.startNewLapAndPrintLapTime("GUI Open");
+					Window window = root.getScene().getWindow();
+					if (window instanceof Stage) {
+						((Stage) window).setTitle("Thread Dump Analyzer: " + file.getName());
+					}
 				});
 			} catch (Exception e) {
 				e.printStackTrace();
