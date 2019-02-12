@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class StackpaneController<depthFilter> implements EventHandler<MouseEvent> {
+public class StackpaneController implements EventHandler<MouseEvent> {
 	private static final Color JAVA_COLOR = Color.web("e1b3ff");
 	private static final Color SUN_COLOR = Color.web("e1b3ff").darker();
 	private static final Color GRADLE_COLOR = Color.web("acd180");
