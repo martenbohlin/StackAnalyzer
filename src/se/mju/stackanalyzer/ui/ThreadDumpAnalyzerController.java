@@ -2,10 +2,13 @@ package se.mju.stackanalyzer.ui;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.List;
+import java.util.zip.GZIPInputStream;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -50,7 +53,8 @@ public class ThreadDumpAnalyzerController {
 		new Thread(() -> {
 			try {
 				StopWatch timer = new StopWatch();
-				List<ThreadState> unfilteredStacks = new ThreadDumpParser(new BufferedReader(new FileReader(file))).parseAll();
+				InputStream in = getInputStream(file);
+				List<ThreadState> unfilteredStacks = new ThreadDumpParser(new BufferedReader(new InputStreamReader(in, "UTF-8"))).parseAll();
 				timer.startNewLapAndPrintLapTime("Parse");
 
 				Platform.runLater(() -> {
@@ -62,6 +66,14 @@ public class ThreadDumpAnalyzerController {
 				throw new RuntimeException(e);
 			}
 		}).start();
+	}
+
+	private InputStream getInputStream(File file) throws IOException {
+		InputStream in = new FileInputStream(file);
+		if (file.getName().endsWith(".gz")) {
+			in = new GZIPInputStream(in);
+		}
+		return in;
 	}
 
 	public void open(String traces) throws IOException {
